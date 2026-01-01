@@ -162,7 +162,7 @@ class APIPoolClient:
         
         request_timeout = self.timeout if timeout is USE_CLIENT_DEFAULT else timeout
         async with httpx.AsyncClient(base_url=self.server_url, timeout=request_timeout) as client:
-            resp = await client.post("/chat/completions" + f"?timeout={timeout}", json={
+            resp = await client.post("/chat/completions" + f"?timeout={int(request_timeout)}", json={
                 "model": model,
                 "messages": messages,
                 "temperature": temperature,
@@ -210,7 +210,7 @@ class APIPoolClient:
             async with sem:
                 request_timeout = self.timeout if timeout is USE_CLIENT_DEFAULT else timeout
                 async with httpx.AsyncClient(base_url=self.server_url, timeout=request_timeout) as client:
-                    resp = await client.post("/chat/completions"+f"?timeout={timeout}", json={
+                    resp = await client.post("/chat/completions"+f"?timeout={int(request_timeout)}", json={
                         "model": model,
                         "messages": messages,
                         "temperature": temperature,

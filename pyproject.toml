@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "api_farm"
-version = "0.1.0"
+version = "0.1.0.1"
 description = "A shared API key pool server and client for managing and using API keys"
 readme = "README.md"
 requires-python = ">=3.8"

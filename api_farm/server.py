@@ -13,6 +13,16 @@ import itertools
 import random
 import time
 
+# --- Data Directory ---
+# Store all persistence files in a fixed location
+DATA_DIR = os.path.join(os.path.expanduser("~"), ".api_farm")
+
+def get_data_path(filename: str) -> str:
+    """Get the full path for a data file in the data directory."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    return os.path.join(DATA_DIR, filename)
+
+
 # --- Data Models ---
 
 class UserRegisterRequest(BaseModel):
@@ -52,21 +62,39 @@ class UserManager:
         self.tokens: Dict[str, str] = {}
         self._lock = asyncio.Lock()
         self.load_users()
+        self.load_tokens()
 
     def load_users(self):
-        if os.path.exists("users.json"):
+        path = get_data_path("users.json")
+        if os.path.exists(path):
             try:
-                with open("users.json", "r") as f:
+                with open(path, "r") as f:
                     self.users = json.load(f)
             except Exception as e:
                 print(f"Error loading users: {e}")
 
     def save_users(self):
         try:
-            with open("users.json", "w") as f:
+            with open(get_data_path("users.json"), "w") as f:
                 json.dump(self.users, f)
         except Exception as e:
             print(f"Error saving users: {e}")
+
+    def load_tokens(self):
+        path = get_data_path("tokens.json")
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    self.tokens = json.load(f)
+            except Exception as e:
+                print(f"Error loading tokens: {e}")
+
+    def save_tokens(self):
+        try:
+            with open(get_data_path("tokens.json"), "w") as f:
+                json.dump(self.tokens, f)
+        except Exception as e:
+            print(f"Error saving tokens: {e}")
 
     async def register(self, username, password) -> tuple[str, bool]:
         async with self._lock:
@@ -88,6 +116,7 @@ class UserManager:
             # Generate simple token
             token = secrets.token_hex(16)
             self.tokens[token] = user["user_id"]
+            self.save_tokens()
             return token, user["user_id"]
 
     async def get_user_id_by_token(self, token: str) -> Optional[str]:
@@ -98,6 +127,7 @@ class UserManager:
         async with self._lock:
             if token in self.tokens:
                 del self.tokens[token]
+                self.save_tokens()
                 return "Logout successful"
             else:
                 return "Logout failed: Not logged in"
@@ -114,9 +144,10 @@ class KeyPool:
         self.load_keys()
 
     def load_keys(self):
-        if os.path.exists("keys.json"):
+        path = get_data_path("keys.json")
+        if os.path.exists(path):
             try:
-                with open("keys.json", "r") as f:
+                with open(path, "r") as f:
                     data = json.load(f)
                     self.user_keys = data.get("user_keys", {})
                     # Reconstruct clients
@@ -130,7 +161,7 @@ class KeyPool:
 
     def save_keys(self):
         try:
-            with open("keys.json", "w") as f:
+            with open(get_data_path("keys.json"), "w") as f:
                 json.dump({"user_keys": self.user_keys}, f)
         except Exception as e:
             print(f"Error saving keys: {e}")
